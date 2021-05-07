@@ -2,6 +2,12 @@
 # Description: Types of Sorting Algorthims
 
 .data
+
+
+# We can maybe implement a way for user to input their custom array after we finish implementing all the algorithms.
+array: .word 2, 5, 1, 9, 30, 4, 25, 10, 40, 56, 23, 17, 8, 3, 6
+size: .word 15
+
 prompt1: .asciiz "Which sorting algorithm do you want to run?\n"
 invalidInput: .asciiz "Invalid input, please try again."
 option1: .asciiz "1. Selection Sort\n"
