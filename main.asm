@@ -113,6 +113,7 @@ continue_menu:
 
 choice1:
 	jal selectionSort
+	jal print
 	j exit
 
 choice2:
@@ -206,7 +207,7 @@ quickSortStart:
 	
 	jal		PRINT
 	
-	j		exit2
+	j		exit
 	
 PRINT:
 	move		$t0, $s0
@@ -460,9 +461,5 @@ print:
 	jr $ra
 	
 exit:
-	jal print
-	li $v0, 10
-	syscall
-exit2:
 	li $v0, 10
 	syscall
