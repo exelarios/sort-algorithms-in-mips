@@ -12,10 +12,11 @@ invalidInput: .asciiz "Invalid input, please try again."
 option1: .asciiz "1. Selection Sort\n"
 option2: .asciiz "2. Quick Sort\n"
 option3: .asciiz "3. Bubble Sort\n"
-option4: .asciiz "4. Something Sort\n"
+option4: .asciiz "4. Merge Sort\n"
 testPrompt1: .asciiz "Hello"
 newLine: .asciiz "\r\n"
 space: .ascii " "
+c: .word 0:100 # for the merge sort :)
 
 .text
 main:
@@ -125,6 +126,10 @@ choice3:
 	j exit
 	
 choice4:
+	jal mergeSort
+	move $s0, $s7			# put array size back into s0
+	addi $s1, $a0, 4		# set s1 to array for print
+	jal print
 	j exit
 
 selectionSort:
@@ -425,6 +430,131 @@ bubbleSort:
 		
 		addi $t6, $t6, 1		# increment counter 
 		j exit_loop			# go back to beginning of loop
+		
+mergeSort:
+	move $s7, $s0				# save array size value
+	move $a0, $s1				# load address of array to $a0 as an argument
+	addi $a1, $zero, 0 			# $a1 = low	
+	move $a2, $s0 			# $a2 = high
+	
+	merge_loop:
+		slt $t0, $a1, $a2 		# if low < high then $t0 = 1 else $t0 = 0  
+		beq $t0, $zero, return		# if $t0 = 0, go to return
+		
+		addi $sp, $sp, -16		# make space for 4 items on stack
+		sw $ra, 12($sp)			# save return address
+		sw $a1, 8($sp)			# save low value in $a1
+		sw $a2, 4($sp)			# save high value in $a2
+		
+		add $s0, $a1, $a2		# mid = low + high
+		sra $s0, $s0, 1			# mid = (low + high) / 2
+		sw $s0, 0($sp)			# save mid value in $s0
+		
+		add $a2, $s0, $zero		# high = mid (first half of array)
+		jal merge_loop			# call merge_loop
+		
+		lw $s0, 0($sp)			# get mid value from stack $s0
+		addi $s1, $s0, 1		# $s1 = mid + 1
+		add $a1, $s1, $zero		# $a1/low = mid + 1 (second half of array)
+		lw $a2, 4($sp)			# get high value from stack $a2
+		jal merge_loop			# call merge_loop
+		
+		lw, $a1, 8($sp) 		# get low value $a1
+		lw, $a2, 4($sp)  		# get high value $a2
+		lw, $a3, 0($sp) 		# get mid value $a3
+		jal merge			# go to merge
+		
+		lw $ra, 12($sp)			# restore $ra from the stack
+		addi $sp, $sp, 16 		# restore stack pointer
+		jr  $ra
+		
+	return:
+		jr $ra				# return to address
+		
+	merge:
+		add  $s0, $a1, $zero 	# $s0 = i; i = low
+		add  $s1, $a1, $zero 	# $s1 = k; k = low
+		addi $s2, $a3, 1  	# $s2 = j; j = mid + 1
+		
+	While1: 
+		blt  $a3,  $s0, While2	# if mid < i then go to While2
+		blt  $a2,  $s2, While2	# if high < j then go to While2
+		j  If_merge		# if i <= mid && j <=high
+	
+	If_merge:
+		sll  $t0, $s0, 2	# $t0 = i*4
+		add  $t0, $t0, $a0	# add offset to the address of a[0]; now $t2 = address of a[i]
+		lw   $t1, 0($t0)	# load the value at a[i] into $t1
+		sll  $t2, $s2, 2	# $t1 = j*4
+		add  $t2, $t2, $a0	# add offset to the address of a[0]; now $t2 = address of a[j]
+		lw   $t3, 0($t2)	# load the value of a[j] into $t3	
+		blt  $t3, $t1, Else	# if a[j] < a[i], go to Else
+		la   $t4, c		# Get start address of c
+		sll  $t5, $s1, 2	# k*4
+		add  $t4, $t4, $t5	# $t4 = c[k]; $t4 is address of c[k]
+		sw   $t1, 0($t4)	# c[k] = a[i]
+		addi $s1, $s1, 1	# k++
+		addi $s0, $s0, 1	# i++
+		j    While1		# Go to next iteration
+	
+	Else:
+		sll  $t2, $s2, 2	# $t1 = j*4
+		add  $t2, $t2, $a0	# add offset to the address of a[0]; now $t2 = address of a[j]
+		lw   $t3, 0($t2)	# $t3 = whatever is in a[j]	
+		la   $t4, c		# Get start address of c
+		sll  $t5, $s1, 2	# k*4
+		add  $t4, $t4, $t5	# $t4 = c[k]; $t4 is address of c[k]
+		sw   $t3, 0($t4)	# c[k] = a[j]
+		addi $s1, $s1, 1	# k++
+		addi $s2, $s2, 1	# j++
+		j    While1		# Go to next iteration
+		
+	While2:
+		blt  $a3, $s0, While3 	# if mid < i
+		sll $t0, $s0, 2		# # $t6 = i*4
+		add $t0, $a0, $t0	# add offset to the address of a[0]; now $t6 = address of a[i]
+		lw $t1, 0($t0)		# load value of a[i] into $t7
+		la  $t2, c		# Get start address of c
+		sll $t3, $s1, 2         # k*4
+		add $t3, $t3, $t2	# $t5 = c[k]; $t4 is address of c[k]
+		sw $t1, 0($t3) 		# saving $t7 (value of a[i]) into address of $t5, which is c[k]
+		addi $s1, $s1, 1   	# k++
+		addi $s0, $s0, 1   	# i++
+		j While2		# Go to next iteration
+	
+
+	While3:
+		blt  $a2,  $s1, For_Initializer	#if high < j then go to For loop
+		sll $t2, $s2, 2    	# $t6 = j*4
+		add $t2, $t2, $a0  	# add offset to the address of a[0]; now $t6 = address of a[j]
+		lw $t3, 0($t2)     	# $t7 = value in a[j]
+	
+		la  $t4, c		# Get start address of c
+		sll $t5, $s1, 2	   	# k*4
+		add $t4, $t4, $t5  	# $t5 = c[k]; $t4 is address of c[k]
+		sw $t3, 0($t4)     	# $t4 = c[k]; $t4 is address of c[k]
+		addi $s1, $s1, 1   	# k++
+		addi $s2, $s2, 1   	# j++
+		j While3		# Go to next iteration
+
+	For_Initializer:
+		add  $t0, $a1, $zero	# initialize $s5 to low for For loop
+		addi $t1, $a2, 1 	# initialize $t3 to high+1 for For loop
+		la   $t4, c		# load the address of array c into $s7	
+		j    For
+	For:
+		slt $t7, $t0, $t1  	# $t4 = 1 if $s5 < $s2
+		beq $t7, $zero, sortEnd	# if $t4 = 0, go to sortEnd
+		sll $t2, $t0, 2   	# $s5 * 4 to get the offset
+		add $t3, $t2, $a0	# add the offset to the address of a => a[$t7]
+		add $t5, $t2, $t4	# add the offset to the address of c => c[$t5]
+		lw  $t6, 0($t5)		# loads value of c[i] into $t6
+		sw $t6, 0($t3)   	# save the value at c[$t0] to a[$t0]; a[i] = c[i]
+		addi $t0, $t0, 1 	# increment $t0 by 1 for the i++ part of For loop
+		j For 			# Go to next iteration
+
+	sortEnd:
+		jr $ra			# return to calling routine
 		
 print:
 	addi $sp, $sp, -8
