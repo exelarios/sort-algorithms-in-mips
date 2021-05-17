@@ -8,12 +8,12 @@
 prompt1: .asciiz "Which sorting algorithm do you want to run?\n"
 prompt2: .asciiz "Enter the array size: "
 prompt3: .asciiz "Please enter the element: "
+prompt4: .asciiz "Do you want to run again? (yes=1): "
 invalidInput: .asciiz "Invalid input, please try again."
 option1: .asciiz "1. Selection Sort\n"
 option2: .asciiz "2. Quick Sort\n"
 option3: .asciiz "3. Bubble Sort\n"
 option4: .asciiz "4. Merge Sort\n"
-testPrompt1: .asciiz "Hello"
 newLine: .asciiz "\r\n"
 space: .ascii " "
 c: .word 0:100 # for the merge sort :)
@@ -589,5 +589,15 @@ print:
 	jr $ra
 	
 exit:
+	la $a0, prompt4
+	li $v0, 4
+	syscall
+	
+	li $v0, 5
+	syscall
+	move $a1, $v0
+	
+	beq $a1, 1, menu
+	
 	li $v0, 10
 	syscall
