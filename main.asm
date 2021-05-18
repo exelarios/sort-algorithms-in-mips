@@ -8,7 +8,6 @@
 prompt1: .asciiz "Which sorting algorithm do you want to run?\n"
 prompt2: .asciiz "Enter the array size: "
 prompt3: .asciiz "Please enter the element: "
-prompt4: .asciiz "Do you want to run again? (yes=1): "
 invalidInput: .asciiz "Invalid input, please try again."
 option1: .asciiz "1. Selection Sort\n"
 option2: .asciiz "2. Quick Sort\n"
@@ -588,16 +587,6 @@ print:
 	addi $sp, $sp, 8
 	jr $ra
 	
-exit:
-	la $a0, prompt4
-	li $v0, 4
-	syscall
-	
-	li $v0, 5
-	syscall
-	move $a1, $v0
-	
-	beq $a1, 1, menu
-	
+exit:	
 	li $v0, 10
 	syscall
